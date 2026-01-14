@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Ads | CluckCart</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">🐔 CluckCart</div>
+  <nav class="nav" id="navLinks"></nav>
+</header>
+
+<section class="listings-section">
+  <h2 class="page-title" style="text-align:center; margin-bottom:20px;">My Ads</h2>
+  <div id="myAdList" class="ad-list"></div>
+</section>
+
+<footer class="footer">
+  <p>© 2025 CluckCart. All rights reserved.</p>
+</footer>
+
+<!-- shared navbar script -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const nav = document.getElementById('navLinks');
+  if (!nav) return;
+
+  const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+  let links = '<a href="index.html">Home</a>';
+  links += '<a href="post-ad.html">Post Ad</a>';
+  links += '<a href="listing.html">Browse Listings</a>';
+
+  if (!user) {
+    links += '<a href="login.html">Login</a>';
+    links += '<a href="register.html">Register</a>';
+  }
+
+  if (user) {
+    if (user.role === 'admin') {
+      links += '<a href="admin.html">Admin</a>';
+    }
+    links += `
+      <div class="nav-profile">
+        <button type="button" class="nav-profile-btn">
+          <span>👤 ${user.name}</span><span>▾</span>
+        </button>
+        <div class="nav-profile-menu">
+          <a href="my-ads.html">My Ads</a>
+          <a href="#" id="logoutLink">Logout</a>
+        </div>
+      </div>
+    `;
+  }
+
+  nav.innerHTML = links;
+
+  const profile = nav.querySelector('.nav-profile');
+  if (profile) {
+    const btn = profile.querySelector('.nav-profile-btn');
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      profile.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+      if (!profile.contains(e.target)) {
+        profile.classList.remove('open');
+      }
+    });
+  }
+
+  const logout = document.getElementById('logoutLink');
+  if (logout) {
+    logout.addEventListener('click', function (e) {
+      e.preventDefault();
+      localStorage.removeItem('currentUser');
+      window.location.href = 'index.html';
+    });
+  }
+});
+</script>
+
+<!-- My Ads logic -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+  const myAdList = document.getElementById('myAdList');
+
+  if (!currentUser) {
+    myAdList.innerHTML = '<p>You need to log in to see your ads.</p>';
+    return;
+  }
+
+  let ads = JSON.parse(localStorage.getItem('ads') || '[]');
+
+  // normalize ids & ownerMobile
+  ads = ads.map(ad => {
+    if (!ad.id) ad.id = Date.now() + Math.random();
+    if (!ad.ownerMobile) ad.ownerMobile = ad.contact;
+    return ad;
+  });
+  localStorage.setItem('ads', JSON.stringify(ads));
+
+  const myAds = ads.filter(ad => ad.ownerMobile === currentUser.mobile);
+
+  if (myAds.length === 0) {
+    myAdList.innerHTML = '<p>You have not posted any ads yet.</p>';
+    return;
+  }
+
+  myAds.forEach(ad => {
+    const card = document.createElement('div');
+    card.classList.add('ad-card');
+    card.innerHTML = `
+      <img src="${ad.image}" alt="${ad.title}" class="ad-image">
+      <div class="ad-content">
+        <h3 class="ad-title">${ad.title}</h3>
+        <p class="ad-category"><strong>Category:</strong> ${ad.category}</p>
+        <p class="ad-price"><strong>Price:</strong> ₹${ad.price}</p>
+        <p class="ad-location"><strong>Location:</strong> ${ad.location}</p>
+        <p class="ad-desc">${ad.description}</p>
+        <p class="ad-contact"><strong>Contact:</strong> ${ad.contact}</p>
+        ${ad.status ? `<p><strong>Status:</strong> ${ad.status}</p>` : ''}
+        <button class="details-btn" data-id="${ad.id}">View Details</button>
+      </div>
+    `;
+    myAdList.appendChild(card);
+  });
+
+  myAdList.addEventListener('click', function(e) {
+    if (e.target.classList.contains('details-btn')) {
+      const id = e.target.getAttribute('data-id');
+      localStorage.setItem('selectedAdId', id);
+      window.location.href = 'ad-details.html';
+    }
+  });
+});
+</script>
+
+</body>
+</html>
