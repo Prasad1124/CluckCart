@@ -21,6 +21,8 @@ app.use("/api/auth", require("./routes/auth")(readDB, writeDB));
 app.use("/api/ads", require("./routes/ads")(readDB, writeDB));
 app.use("/api/otp", require("./routes/otp")(readDB, writeDB));
 
-app.listen(3000, () =>
-  console.log("✅ CluckCart backend running on http://localhost:3000")
-);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`✅ CluckCart backend running on port ${PORT}`);
+});
