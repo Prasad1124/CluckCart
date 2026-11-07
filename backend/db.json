@@ -1,11 +1,12 @@
 {
-  "users": [],
-  "ads": [],
-  "otps": [
+  "users": [
     {
+      "name": "Admin",
       "mobile": "6300904112",
-      "otp": 7155,
-      "time": 1768129420250
+      "password": "Prasad@2004",
+      "role": "admin"
     }
-  ]
+  ],
+  "ads": [],
+  "otps": []
 }
