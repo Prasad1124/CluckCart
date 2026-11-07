@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ad Details | CluckCart</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">🐔 CluckCart</div>
+  <nav class="nav" id="navLinks"></nav>
+</header>
+
+<section class="details-section">
+  <div class="details-container" id="detailsContainer"></div>
+</section>
+
+<footer class="footer">
+  <p>© 2025 CluckCart. All rights reserved.</p>
+</footer>
+
+<!-- shared navbar script -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const nav = document.getElementById('navLinks');
+  if (!nav) return;
+
+  const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+  let links = '<a href="index.html">Home</a>';
+  links += '<a href="post-ad.html">Post Ad</a>';
+  links += '<a href="listing.html">Browse Listings</a>';
+
+  if (!user) {
+    links += '<a href="login.html">Login</a>';
+    links += '<a href="register.html">Register</a>';
+  }
+
+  if (user) {
+    if (user.role === 'admin') {
+      links += '<a href="admin.html">Admin</a>';
+    }
+    links += `
+      <div class="nav-profile">
+        <button type="button" class="nav-profile-btn">
+          <span>👤 ${user.name}</span><span>▾</span>
+        </button>
+        <div class="nav-profile-menu">
+          <a href="my-ads.html">My Ads</a>
+          <a href="#" id="logoutLink">Logout</a>
+        </div>
+      </div>
+    `;
+  }
+
+  nav.innerHTML = links;
+
+  const profile = nav.querySelector('.nav-profile');
+  if (profile) {
+    const btn = profile.querySelector('.nav-profile-btn');
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      profile.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+      if (!profile.contains(e.target)) {
+        profile.classList.remove('open');
+      }
+    });
+  }
+
+  const logout = document.getElementById('logoutLink');
+  if (logout) {
+    logout.addEventListener('click', function (e) {
+      e.preventDefault();
+      localStorage.removeItem('currentUser');
+      window.location.href = 'index.html';
+    });
+  }
+});
+</script>
+
+<!-- details logic -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const container = document.getElementById('detailsContainer');
+  const ads = JSON.parse(localStorage.getItem('ads') || '[]');
+  const selectedId = localStorage.getItem('selectedAdId');
+
+  if (!selectedId) {
+    container.innerHTML = '<p>No ad selected.</p>';
+    return;
+  }
+
+  const ad = ads.find(a => String(a.id) === String(selectedId));
+  if (!ad) {
+    container.innerHTML = '<p>Ad not found. It may have been removed.</p>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="details-image">
+      <img src="${ad.image}" alt="${ad.title}">
+    </div>
+    <div class="details-info">
+      <h2>${ad.title}</h2>
+      <p class="price">₹${ad.price}</p>
+      <p class="location"><strong>Location:</strong> ${ad.location}</p>
+      <p><strong>Category:</strong> ${ad.category}</p>
+      ${ad.status ? `<p><strong>Status:</strong> ${ad.status}</p>` : ''}
+      <h3>Description</h3>
+      <p>${ad.description}</p>
+      <h3>Contact</h3>
+      <p><strong>Phone:</strong> ${ad.contact}</p>
+      <a class="whatsapp-btn" target="_blank"
+         href="https://wa.me/91${ad.contact}?text=${encodeURIComponent('Hi, I am interested in your ad on CluckCart: ' + ad.title)}">
+        Chat on WhatsApp
+      </a>
+      <br/>
+      <button class="contact-btn" onclick="window.history.back()">⬅ Back</button>
+    </div>
+  `;
+});
+</script>
+
+</body>
+</html>

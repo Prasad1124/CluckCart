@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register | CluckCart</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,46 +25,47 @@
     <h2>Create Account</h2>
     <p>Register using your mobile number</p>
 
-    <!-- ✅ FIXED FORM -->
     <form id="registerForm" class="register-form">
 
-      <!-- NAME -->
       <label for="name">Full Name</label>
-      <input type="text" id="name" placeholder="Enter your full name" required />
+      <input type="text" id="name"
+             placeholder="Enter your full name" required>
 
-      <!-- MOBILE -->
       <label for="mobile">Mobile Number</label>
       <div style="display:flex; gap:10px;">
         <input type="tel" id="mobile" maxlength="10"
-               placeholder="10-digit mobile number" required style="flex:1;">
+               placeholder="10-digit mobile number"
+               required style="flex:1;">
         <button type="button" id="sendOtpBtn">Send OTP</button>
       </div>
 
-      <!-- OTP -->
-      <label for="otp">Enter OTP</label>
-      <input type="text" id="otp" maxlength="6"
-             placeholder="Enter OTP received on mobile" required />
+      <label for="otp">Enter Demo OTP</label>
+      <input type="text" id="otp" maxlength="4"
+             inputmode="numeric"
+             placeholder="Enter demo OTP 1234" required>
 
-      <!-- PASSWORD -->
       <label for="password">Password</label>
       <div class="password-row">
-        <input type="password" id="password" placeholder="Create password" required />
-        <button type="button" class="password-toggle" data-target="password">👁</button>
+        <input type="password" id="password"
+               placeholder="Create password" required>
+        <button type="button" class="password-toggle"
+                data-target="password">👁</button>
       </div>
 
-      <!-- CONFIRM PASSWORD -->
       <label for="confirmPassword">Confirm Password</label>
       <div class="password-row">
-        <input type="password" id="confirmPassword" placeholder="Confirm password" required />
-        <button type="button" class="password-toggle" data-target="confirmPassword">👁</button>
+        <input type="password" id="confirmPassword"
+               placeholder="Confirm password" required>
+        <button type="button" class="password-toggle"
+                data-target="confirmPassword">👁</button>
       </div>
 
-      <button type="submit">Register</button>
+      <button type="submit" id="registerBtn">Register</button>
 
       <p style="margin-top:12px;">
-        Already have an account? <a href="login.html">Login here</a>
+        Already have an account?
+        <a href="login.html">Login here</a>
       </p>
-
     </form>
   </div>
 </section>
@@ -73,67 +75,110 @@
 </footer>
 
 <script>
-/* ================= HELPERS ================= */
+const API_URL = "https://cluckcart-backend.onrender.com/api";
+
+const form = document.getElementById("registerForm");
+const mobileInput = document.getElementById("mobile");
+const otpInput = document.getElementById("otp");
+const sendOtpBtn = document.getElementById("sendOtpBtn");
+const registerBtn = document.getElementById("registerBtn");
+
+let otpSentForMobile = "";
+
 function isValidMobile(mobile) {
-  return /^[1-9][0-9]{9}$/.test(mobile);
+  return /^[6-9]\d{9}$/.test(mobile);
 }
 
-/* ================= PASSWORD TOGGLE ================= */
-document.querySelectorAll(".password-toggle").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const input = document.getElementById(btn.dataset.target);
-    const hidden = input.type === "password";
-    input.type = hidden ? "text" : "password";
-    btn.textContent = hidden ? "🙈" : "👁";
+async function readResponse(response) {
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.message || `Server error: ${response.status}`);
+  }
+
+  return data;
+}
+
+// Password visibility
+document.querySelectorAll(".password-toggle").forEach(button => {
+  button.addEventListener("click", () => {
+    const input = document.getElementById(button.dataset.target);
+    input.type = input.type === "password" ? "text" : "password";
+    button.textContent = input.type === "password" ? "👁" : "🙈";
   });
 });
 
-/* ================= SEND OTP ================= */
-const sendOtpBtn = document.getElementById("sendOtpBtn");
-const mobileInput = document.getElementById("mobile");
+// If mobile number changes, require sending OTP again
+mobileInput.addEventListener("input", () => {
+  if (mobileInput.value.trim() !== otpSentForMobile) {
+    otpSentForMobile = "";
+  }
+});
 
-sendOtpBtn.addEventListener("click", () => {
+// Send demo OTP
+sendOtpBtn.addEventListener("click", async () => {
   const mobile = mobileInput.value.trim();
 
   if (!isValidMobile(mobile)) {
-    alert("Please enter a valid 10-digit mobile number.");
+    alert("Enter a valid 10-digit Indian mobile number.");
     return;
   }
 
-  fetch("http://localhost:3000/api/otp/send", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mobile })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      alert("OTP sent successfully to your mobile.");
-    } else {
-      alert("Failed to send OTP.");
+  sendOtpBtn.disabled = true;
+
+  try {
+    const response = await fetch(`${API_URL}/otp/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mobile })
+    });
+
+    const data = await readResponse(response);
+
+    if (!data.success) {
+      throw new Error(data.message || "Could not generate demo OTP.");
     }
-  })
-  .catch(err => {
-  console.error(err);
-  alert("Failed to send OTP. Check backend logs.");
+
+    otpSentForMobile = mobile;
+    otpInput.value = "";
+    alert("Demo OTP: 1234. No SMS was sent.");
+
+  } catch (error) {
+    console.error("Send OTP error:", error);
+    alert(error.message || "Unable to connect to backend.");
+  } finally {
+    sendOtpBtn.disabled = false;
+  }
 });
-});
 
-
-/* ================= REGISTER SUBMIT ================= */
-const registerForm = document.getElementById("registerForm");
-
-registerForm.addEventListener("submit", function (e) {
-  e.preventDefault();
+// Register
+form.addEventListener("submit", async event => {
+  event.preventDefault();
 
   const name = document.getElementById("name").value.trim();
   const mobile = mobileInput.value.trim();
-  const otp = document.getElementById("otp").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const confirmPassword = document.getElementById("confirmPassword").value.trim();
+  const otp = otpInput.value.trim();
+  const password = document.getElementById("password").value;
+  const confirmPassword =
+    document.getElementById("confirmPassword").value;
+
+  if (!name) {
+    alert("Please enter your name.");
+    return;
+  }
 
   if (!isValidMobile(mobile)) {
-    alert("Invalid mobile number.");
+    alert("Enter a valid 10-digit mobile number.");
+    return;
+  }
+
+  if (otpSentForMobile !== mobile) {
+    alert("Please click Send OTP for this mobile number first.");
+    return;
+  }
+
+  if (password.length < 6) {
+    alert("Password must contain at least 6 characters.");
     return;
   }
 
@@ -142,35 +187,51 @@ registerForm.addEventListener("submit", function (e) {
     return;
   }
 
-  // 1️⃣ VERIFY OTP
-  fetch("http://localhost:3000/api/otp/verify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mobile, otp })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (!data.success) {
-      alert("Invalid or expired OTP.");
-      return;
+  if (otp !== "1234") {
+    alert("Invalid demo OTP. Please enter 1234.");
+    return;
+  }
+
+  registerBtn.disabled = true;
+  registerBtn.textContent = "Registering...";
+
+  try {
+    // Verify OTP using the same deployed backend
+    const verifyResponse = await fetch(`${API_URL}/otp/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mobile, otp })
+    });
+
+    const verifyData = await readResponse(verifyResponse);
+
+    if (!verifyData.success) {
+      throw new Error(verifyData.message || "OTP verification failed.");
     }
 
-    // 2️⃣ REGISTER USER
-    return fetch("http://localhost:3000/api/auth/register", {
+    // Register user
+    const registerResponse = await fetch(`${API_URL}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, mobile, password })
     });
-  })
-  .then(res => {
-    if (!res) return;
-    if (!res.ok) throw new Error();
+
+    const registerData = await readResponse(registerResponse);
+
+    if (!registerData.success) {
+      throw new Error(registerData.message || "Registration failed.");
+    }
+
     alert("Registration successful! Please login.");
     window.location.href = "login.html";
-  })
-  .catch(() => {
-    alert("Registration failed. User may already exist.");
-  });
+
+  } catch (error) {
+    console.error("Registration error:", error);
+    alert(error.message || "Registration failed. Please try again.");
+  } finally {
+    registerBtn.disabled = false;
+    registerBtn.textContent = "Register";
+  }
 });
 </script>
 

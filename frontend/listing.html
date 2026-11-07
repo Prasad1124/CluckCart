@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animal Listings | CluckCart</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">🐔 CluckCart</div>
+  <nav class="nav" id="navLinks"></nav>
+</header>
+
+<section class="listings-section">
+  <h2 class="page-title">Animal & Pet Listings</h2>
+
+  <div class="filter-bar">
+    <input type="text" id="searchInput" placeholder="Search...">
+    <select id="filterCategory">
+      <option value="all">All</option>
+      <option value="Hen">Hen</option>
+      <option value="Goat">Goat</option>
+      <option value="Cow">Cow</option>
+      <option value="Buffalo">Buffalo</option>
+      <option value="Dog">Dog</option>
+      <option value="Cat">Cat</option>
+      <option value="Other">Other</option>
+    </select>
+  </div>
+
+  <div id="ad-list" class="ad-list"></div>
+</section>
+
+<footer class="footer">
+  <p>© 2025 CluckCart. All rights reserved.</p>
+</footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const nav = document.getElementById("navLinks");
+  const user = JSON.parse(localStorage.getItem("currentUser") || "null");
+
+  nav.innerHTML = `
+    <a href="index.html">Home</a>
+    <a href="listing.html">Browse Listings</a>
+    ${user ? `<a href="post-ad.html">Post Ad</a>` : ""}
+  `;
+
+  const adList = document.getElementById("ad-list");
+  const search = document.getElementById("searchInput");
+  const filter = document.getElementById("filterCategory");
+
+  let ads = [];
+
+  fetch("http://localhost:3000/api/ads")
+    .then(res => res.json())
+    .then(data => {
+      ads = data.filter(a => a.status === "approved");
+
+      const savedCat = localStorage.getItem("selectedCategory");
+      if (savedCat) {
+        filter.value = savedCat;
+        localStorage.removeItem("selectedCategory");
+      }
+
+      render();
+    });
+
+  function render() {
+    const q = search.value.toLowerCase();
+    const c = filter.value;
+
+    adList.innerHTML = "";
+
+    ads.filter(ad => {
+      const matchText =
+        ad.title.toLowerCase().includes(q) ||
+        ad.location.toLowerCase().includes(q);
+
+      const matchCat = c === "all" || ad.category === c;
+      return matchText && matchCat;
+    }).forEach(ad => {
+      const card = document.createElement("div");
+      card.className = "ad-card";
+      card.innerHTML = `
+        <img src="${ad.image}">
+        <h3>${ad.title}</h3>
+        <p>${ad.category}</p>
+        <p>₹${ad.price}</p>
+        <p>${ad.location}</p>
+        <a target="_blank"
+           href="https://wa.me/91${ad.contact}?text=Hi, I saw your ad on CluckCart">
+           WhatsApp
+        </a>
+      `;
+      adList.appendChild(card);
+    });
+  }
+
+  search.oninput = render;
+  filter.onchange = render;
+});
+</script>
+
+</body>
+</html>

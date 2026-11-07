@@ -1,67 +1,52 @@
+
+const express = require("express");
+
 module.exports = (readDB, writeDB) => {
-  const express = require("express");
   const router = express.Router();
 
-  // SEND OTP (DEMO MODE)
-  router.post("/send", (req, res) => {
-    const { mobile } = req.body;
+  const DEMO_OTP = "1234";
 
-    if (!mobile || !/^\d{10}$/.test(mobile)) {
+  // SEND DEMO OTP
+  router.post("/send", (req, res) => {
+    const { mobile } = req.body || {};
+
+    if (!/^[6-9]\d{9}$/.test(String(mobile || ""))) {
       return res.status(400).json({
         success: false,
-        message: "Invalid mobile number"
+        message: "Invalid mobile number."
       });
     }
 
-    const otp = Math.floor(1000 + Math.random() * 9000);
-    const db = readDB();
+    console.log(`Demo OTP generated for mobile: ${mobile}`);
 
-    db.otps = db.otps.filter(o => o.mobile !== mobile);
-
-    db.otps.push({
-      mobile,
-      otp,
-      time: Date.now()
-    });
-
-    writeDB(db);
-
-    // 👇 IMPORTANT: OTP shown in logs (demo)
-    console.log(`📩 DEMO OTP for ${mobile}: ${otp}`);
-
-    res.json({
+    return res.status(200).json({
       success: true,
-      message: "OTP generated (demo mode)"
+      message: "Demo OTP generated successfully.",
+      demoOTP: DEMO_OTP
     });
   });
 
-  // VERIFY OTP
+  // VERIFY DEMO OTP
   router.post("/verify", (req, res) => {
-    const { mobile, otp } = req.body;
-    const db = readDB();
+    const { mobile, otp } = req.body || {};
 
-    const record = db.otps.find(
-      o => o.mobile === mobile && String(o.otp) === String(otp)
-    );
-
-    if (!record) {
+    if (!/^[6-9]\d{9}$/.test(String(mobile || ""))) {
       return res.status(400).json({
         success: false,
-        message: "Invalid OTP"
+        message: "Invalid mobile number."
       });
     }
 
-    // OTP valid for 5 minutes
-    if (Date.now() - record.time > 5 * 60 * 1000) {
+    if (String(otp).trim() !== DEMO_OTP) {
       return res.status(400).json({
         success: false,
-        message: "OTP expired"
+        message: "Invalid demo OTP. Enter 1234."
       });
     }
 
-    res.json({
+    return res.status(200).json({
       success: true,
-      message: "OTP verified"
+      message: "OTP verified successfully."
     });
   });
 

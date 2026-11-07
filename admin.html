@@ -119,7 +119,7 @@ function loadAds() {
 
 // APPROVE AD
 function approveAd(id) {
-  fetch(`http://localhost:3000/api/ads/approve/${id}`, {
+  fetch(`https://cluckcart-backend.onrender.com/api/ads/approve/${id}`, {
     method: "PUT"
   }).then(() => loadAds());
 }
@@ -128,7 +128,7 @@ function approveAd(id) {
 function deleteAd(id) {
   if (!confirm("Delete this ad?")) return;
 
-  fetch(`http://localhost:3000/api/ads/${id}`, {
+  fetch(`https://cluckcart-backend.onrender.com/api/ads/${id}`, {
     method: "DELETE"
   }).then(() => loadAds());
 }

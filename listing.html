@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let ads = [];
 
-  fetch("http://localhost:3000/api/ads")
+  fetch("https://cluckcart-backend.onrender.com/api/ads")
     .then(res => res.json())
     .then(data => {
       ads = data.filter(a => a.status === "approved");

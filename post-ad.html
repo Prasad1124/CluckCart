@@ -139,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const reader = new FileReader();
     reader.onload = () => {
-      fetch("http://localhost:3000/api/ads", {
+      fetch("https://cluckcart-backend.onrender.com//api/ads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

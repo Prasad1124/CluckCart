@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CluckCart - Buy & Sell Animals</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">🐔 CluckCart</div>
+    <nav class="nav" id="navLinks"></nav>
+  </header>
+
+  <section class="hero">
+    <h1>Buy and Sell Animals Easily</h1>
+    <p>Find hens, goats, cows, and buffaloes near you!</p>
+    <div class="search-bar">
+      <input type="text" placeholder="Search animals or location..." />
+      <button>Search</button>
+    </div>
+  </section>
+
+  <!-- Browse by category -->
+  <section class="categories">
+    <h2>Browse by Category</h2>
+    <div class="category-grid">
+      <div class="category-card" data-category="Hen">
+        <img src="images/hen.jpg" alt="Hen" />
+        <h3>Hens/Cocks</h3>
+      </div>
+      <div class="category-card" data-category="Goat">
+        <img src="images/goat.png" alt="Goat" />
+        <h3>Goats</h3>
+      </div>
+      <div class="category-card" data-category="Cow">
+        <img src="images/cow.jpg" alt="Cow" />
+        <h3>Cows</h3>
+      </div>
+      <div class="category-card" data-category="Buffalo">
+        <img src="images/buffalo.jpg" alt="Buffalo" />
+        <h3>Buffaloes</h3>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured animals now dynamic -->
+  <section class="featured">
+    <h2>Featured Animals</h2>
+    <div id="featured-list" class="ad-grid"></div>
+  </section>
+
+  <footer class="footer">
+    <p>© 2025 CluckCart. All rights reserved.</p>
+  </footer>
+
+  <!-- navbar + category + featured logic -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const nav = document.getElementById('navLinks');
+    if (!nav) return;
+
+    const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+    // ----- NAVBAR -----
+    let links = '<a href="index.html">Home</a>';
+    links += '<a href="post-ad.html">Post Ad</a>';
+    links += '<a href="listing.html">Browse Listings</a>';
+
+    if (!user) {
+      links += '<a href="login.html">Login</a>';
+      links += '<a href="register.html">Register</a>';
+    }
+
+    if (user) {
+      if (user.role === 'admin') {
+        links += '<a href="admin.html">Admin</a>';
+      }
+      links += `
+        <div class="nav-profile">
+          <button type="button" class="nav-profile-btn">
+            <span>👤 ${user.name}</span><span>▾</span>
+          </button>
+          <div class="nav-profile-menu">
+            <a href="my-ads.html">My Ads</a>
+            <a href="#" id="logoutLink">Logout</a>
+          </div>
+        </div>
+      `;
+    }
+
+    nav.innerHTML = links;
+
+    // profile dropdown
+    const profile = nav.querySelector('.nav-profile');
+    if (profile) {
+      const btn = profile.querySelector('.nav-profile-btn');
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        profile.classList.toggle('open');
+      });
+      document.addEventListener('click', (e) => {
+        if (!profile.contains(e.target)) {
+          profile.classList.remove('open');
+        }
+      });
+    }
+
+    // logout
+    const logout = document.getElementById('logoutLink');
+    if (logout) {
+      logout.addEventListener('click', function (e) {
+        e.preventDefault();
+        localStorage.removeItem('currentUser');
+        window.location.href = 'index.html';
+      });
+    }
+
+    // ----- CATEGORY CARDS CLICK (go to listing with filter) -----
+    const cards = document.querySelectorAll('.category-card');
+    cards.forEach(card => {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', () => {
+        const category = card.getAttribute('data-category');
+        localStorage.setItem('selectedCategory', category);
+        window.location.href = 'listing.html';
+      });
+    });
+
+    // ----- FEATURED ANIMALS (latest ads) -----
+    const featuredList = document.getElementById('featured-list');
+    let ads = JSON.parse(localStorage.getItem('ads') || '[]');
+
+    if (!ads.length) {
+      featuredList.innerHTML = '<p>No ads yet. Be the first to <a href="post-ad.html">post an ad</a>!</p>';
+      return;
+    }
+
+    // make sure ads have id
+    ads = ads.map(ad => {
+      if (!ad.id) ad.id = Date.now() + Math.random();
+      return ad;
+    });
+    localStorage.setItem('ads', JSON.stringify(ads));
+
+    // get latest 4 ads (you can change 4 to any number)
+    const latest = ads
+      .slice()               // copy array
+      .sort((a, b) => b.id - a.id) // newest first (because id is Date.now)
+      .slice(0, 4);
+
+    featuredList.innerHTML = '';
+
+    latest.forEach(ad => {
+      const card = docu74ment.createElement('div');
+      card.classList.add('ad-card');
+      card.setAttribute('data-id', ad.id);
+      card.innerHTML = `
+        <img src="${ad.image}" alt="${ad.title}" class="ad-image">
+        <h3>${ad.title}</h3>
+        <p>₹${ad.price} • ${ad.location}</p>
+      `;
+      featuredList.appendChild(card);
+    });
+
+    // click a featured card -> go to details page
+    featuredList.addEventListener('click', function(e) {
+      const card = e.target.closest('.ad-card');
+      if (!card) return;
+      const id = card.getAttribute('data-id');
+      localStorage.setItem('selectedAdId', id);
+      window.location.href = 'ad-details.html';
+    });
+  });
+  </script>
+</body>
+</html>

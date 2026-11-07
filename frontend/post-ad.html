@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Post Animal Ad | CluckCart</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ================= HEADER ================= -->
+<header class="header">
+  <div class="logo">🐔 CluckCart</div>
+  <nav class="nav" id="navLinks"></nav>
+</header>
+
+<!-- ================= POST AD SECTION ================= -->
+<section class="post-ad-section">
+  <div class="post-ad-container">
+    <h2>Post Your Animal Ad</h2>
+    <p>Sell farm animals or pets easily</p>
+
+    <form class="post-ad-form">
+      <!-- CATEGORY -->
+      <label for="category">Animal Category:</label>
+      <select id="category" required>
+        <option value="">Select Category</option>
+
+        <optgroup label="Farm Animals">
+          <option value="Hen">Hen / Chicken</option>
+          <option value="Goat">Goat</option>
+          <option value="Cow">Cow</option>
+          <option value="Buffalo">Buffalo</option>
+          <option value="Sheep">Sheep</option>
+        </optgroup>
+
+        <optgroup label="Pets">
+          <option value="Dog">Dog</option>
+          <option value="Cat">Cat</option>
+          <option value="Rabbit">Rabbit</option>
+          <option value="Bird">Bird</option>
+        </optgroup>
+
+        <optgroup label="Others">
+          <option value="Other">Other Animal</option>
+        </optgroup>
+      </select>
+
+      <!-- TITLE -->
+      <label for="title">Ad Title:</label>
+      <input type="text" id="title" placeholder="e.g. Healthy Jersey Cow" required />
+
+      <!-- PRICE -->
+      <label for="price">Price (₹):</label>
+      <input type="number" id="price" placeholder="Enter price" required />
+
+      <!-- LOCATION -->
+      <label for="location">Location:</label>
+      <input type="text" id="location" placeholder="City / Village" required />
+
+      <!-- DESCRIPTION -->
+      <label for="description">Description:</label>
+      <textarea id="description" rows="4" placeholder="Age, breed, vaccination, etc." required></textarea>
+
+      <!-- CONTACT -->
+      <label for="contact">Contact Number:</label>
+      <input
+        type="tel"
+        id="contact"
+        placeholder="10-digit mobile number"
+        pattern="[0-9]{10}"
+        maxlength="10"
+        required
+      />
+
+      <!-- IMAGE -->
+      <label for="image">Upload Image:</label>
+      <input type="file" id="image" accept="image/*" required />
+
+      <button type="submit">Post Ad</button>
+    </form>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+  <p>© 2025 CluckCart. All rights reserved.</p>
+</footer>
+
+<!-- ================= SCRIPT ================= -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const nav = document.getElementById("navLinks");
+  const form = document.querySelector(".post-ad-form");
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+
+  // LOGIN CHECK
+  if (!user) {
+    alert("Please login to post an ad.");
+    window.location.href = "login.html";
+    return;
+  }
+
+  // NAVBAR
+  nav.innerHTML = `
+    <a href="index.html">Home</a>
+    <a href="listing.html">Browse Listings</a>
+    <a href="post-ad.html">Post Ad</a>
+    <a href="my-ads.html">My Ads</a>
+    <div class="nav-profile">
+      <button class="nav-profile-btn">👤 ${user.name} ▾</button>
+      <div class="nav-profile-menu">
+        <a href="#" id="logoutLink">Logout</a>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("logoutLink").onclick = () => {
+    localStorage.removeItem("currentUser");
+    window.location.href = "index.html";
+  };
+
+  // FORM SUBMIT
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+
+    const category = category.value;
+    const title = title.value.trim();
+    const price = price.value;
+    const location = location.value.trim();
+    const description = description.value.trim();
+    const contact = contact.value.trim();
+    const imageFile = image.files[0];
+
+    if (!imageFile) {
+      alert("Please upload an image.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      fetch("http://localhost:3000/api/ads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category,
+          title,
+          price,
+          location,
+          description,
+          contact,
+          image: reader.result,
+          mobile: user.mobile
+        })
+      })
+      .then(res => res.json())
+      .then(() => {
+        alert("Ad posted successfully! Waiting for admin approval.");
+        window.location.href = "my-ads.html";
+      })
+      .catch(() => alert("Failed to post ad."));
+    };
+
+    reader.readAsDataURL(imageFile);
+  });
+});
+</script>
+
+</body>
+</html>

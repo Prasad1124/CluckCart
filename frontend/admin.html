@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard | CluckCart</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">🐔 CluckCart Admin</div>
+  <nav class="nav" id="navLinks"></nav>
+</header>
+
+<section class="admin-section">
+  <div class="admin-container">
+    <h2>Admin Dashboard</h2>
+    <p>Approve or reject user ads</p>
+
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Location</th>
+          <th>Seller</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="adminAdBody"></tbody>
+    </table>
+
+    <p id="noAdsMsg" style="margin-top:15px; text-align:center; display:none;">
+      No pending ads.
+    </p>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>© 2025 CluckCart. Admin Panel.</p>
+</footer>
+
+<!-- ================= NAVBAR + ADMIN GUARD ================= -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const nav = document.getElementById("navLinks");
+  const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+
+  if (!currentUser || currentUser.role !== "admin") {
+    window.location.href = "login.html";
+    return;
+  }
+
+  nav.innerHTML = `
+    <a href="index.html">Home</a>
+    <a href="listing.html">Browse Listings</a>
+    <a href="admin.html">Admin</a>
+    <div class="nav-profile">
+      <button class="nav-profile-btn">👤 ${currentUser.name} ▾</button>
+      <div class="nav-profile-menu">
+        <a href="#" id="logoutLink">Logout</a>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("logoutLink").onclick = () => {
+    localStorage.removeItem("currentUser");
+    window.location.href = "index.html";
+  };
+});
+</script>
+
+<!-- ================= ADMIN ADS LOGIC (BACKEND CONNECTED) ================= -->
+<script>
+const tbody = document.getElementById("adminAdBody");
+const noAdsMsg = document.getElementById("noAdsMsg");
+
+// LOAD ADS FROM BACKEND
+function loadAds() {
+  fetch("http://localhost:3000/api/ads")
+    .then(res => res.json())
+    .then(ads => {
+      tbody.innerHTML = "";
+
+      const pendingAds = ads.filter(ad => ad.status === "pending");
+
+      if (pendingAds.length === 0) {
+        noAdsMsg.style.display = "block";
+        return;
+      }
+
+      noAdsMsg.style.display = "none";
+
+      pendingAds.forEach((ad, index) => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${ad.title}</td>
+          <td>${ad.category || "-"}</td>
+          <td>₹${ad.price}</td>
+          <td>${ad.location || "-"}</td>
+          <td>${ad.mobile}</td>
+          <td><span class="status pending">pending</span></td>
+          <td>
+            <button onclick="approveAd(${ad.id})">Approve</button>
+            <button onclick="deleteAd(${ad.id})">Delete</button>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+    });
+}
+
+// APPROVE AD
+function approveAd(id) {
+  fetch(`http://localhost:3000/api/ads/approve/${id}`, {
+    method: "PUT"
+  }).then(() => loadAds());
+}
+
+// DELETE AD
+function deleteAd(id) {
+  if (!confirm("Delete this ad?")) return;
+
+  fetch(`http://localhost:3000/api/ads/${id}`, {
+    method: "DELETE"
+  }).then(() => loadAds());
+}
+
+loadAds();
+</script>
+
+</body>
+</html>
